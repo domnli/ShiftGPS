@@ -5,8 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.location.Location;
-import android.location.LocationListener;
+
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,7 +13,6 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.baidu.mapapi.BMapManager;
 import com.baidu.mapapi.map.MKMapStatus;
@@ -70,7 +68,6 @@ public class MainActivity extends Activity {
 		});
 
 		btnStart.setOnClickListener(new View.OnClickListener() {
-
 			@Override
 			public void onClick(View v) {
 				String coordsStr = txtCoords.getText().toString();
@@ -112,14 +109,6 @@ public class MainActivity extends Activity {
 		String lon; // 经度
 		lat = point.getLatitudeE6() / 1E6 + "";
 		lon = point.getLongitudeE6() / 1E6 + "";
-		return lat + "," + lon;
-	}
-
-	private String coorFormat(Location point) {
-		String lat; // 纬度
-		String lon; // 经度
-		lat = point.getLatitude() + "";
-		lon = point.getLongitude() + "";
 		return lat + "," + lon;
 	}
 

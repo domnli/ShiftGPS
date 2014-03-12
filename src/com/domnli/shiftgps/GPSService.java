@@ -1,7 +1,5 @@
 package com.domnli.shiftgps;
 
-import java.util.Iterator;
-
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -35,7 +33,6 @@ public class GPSService extends Service implements Runnable {
 
 	@Override
 	public void onStart(Intent intent, int startId) {
-
 		Bundle bundle = intent.getBundleExtra("bundle");
 		currentLocation = new Location(mMockProviderName);
 		currentLocation.setLatitude(Location.convert(bundle.getString("lat")));
