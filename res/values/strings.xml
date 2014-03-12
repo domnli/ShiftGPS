@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">移动GPS - INGRESS必备神器</string>
+    <string name="action_settings">Settings</string>
+    <string name="btnStart">定位</string>
+    <string name="btnStop">停止</string>
+    <string name="coor">0,0</string>
+
+</resources>

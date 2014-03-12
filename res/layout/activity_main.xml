@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>  
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" >
+
+	<com.baidu.mapapi.map.MapView android:id="@+id/bmapsView"  
+                    android:layout_width="fill_parent"  
+                    android:layout_height="fill_parent"  
+                    android:clickable="true" />
+	<LinearLayout android:orientation="vertical" android:padding="5.0dip" android:layout_width="fill_parent" android:layout_height="wrap_content">
+	    <EditText 
+	        android:id="@+id/txtCoords" 
+	        android:layout_width="fill_parent" 
+	        android:layout_height="wrap_content" 
+	        android:hint="@string/coor"
+	        android:textAlignment="center">
+	    </EditText>
+		<LinearLayout android:orientation="horizontal" android:padding="5.0dip" android:layout_width="fill_parent" android:layout_height="wrap_content">
+	        <Button android:textSize="18.0dip" android:textColor="#ff008800" android:id="@+id/btnStart" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="@string/btnStart" android:layout_weight="3.0" />
+	        <Button android:textSize="18.0dip" android:textColor="#ffaa0000" android:id="@+id/btnStop" android:layout_width="0.0dip" android:layout_height="wrap_content" android:text="@string/btnStop" android:layout_weight="1.0" />
+	    </LinearLayout>
+    </LinearLayout>
+</merge>
