@@ -1,8 +1,13 @@
 package com.domnli.shiftgps;
 
+import com.baidu.platform.comapi.basestruct.GeoPoint;
+
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -15,6 +20,7 @@ public class GPSService extends Service implements Runnable {
 	private String mMockProviderName = "gps";
 	private Location currentLocation;
 	private Thread thd;
+	private BroadcastReceiver mBroadcastReceiver;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -28,6 +34,21 @@ public class GPSService extends Service implements Runnable {
 		Log.i("service", thd.getName());
 		locationManager = (LocationManager) this
 				.getSystemService(Context.LOCATION_SERVICE);
+		mBroadcastReceiver = new BroadcastReceiver() {
+
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				String lat = intent.getStringExtra("lat");
+				String lng = intent.getStringExtra("lng");
+				SharedPreferences.Editor lastCoorEdit =  getSharedPreferences("data", 0).edit();
+				lastCoorEdit.putString("lastCoor", lat+","+lng);
+				lastCoorEdit.commit();
+			}
+
+		};
+		IntentFilter intentFilter = new IntentFilter(MainActivity.class
+				.getPackage().getName() + ".NOTIFY");
+		this.registerReceiver(mBroadcastReceiver, intentFilter);
 		super.onCreate();
 	}
 
@@ -48,6 +69,7 @@ public class GPSService extends Service implements Runnable {
 	public void onDestory() {
 		Log.i("service", "onDestory");
 		thd.interrupt();
+		unregisterReceiver(mBroadcastReceiver);
 		super.onDestroy();
 	}
 

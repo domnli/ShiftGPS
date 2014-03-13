@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -50,10 +51,15 @@ public class MainActivity extends Activity {
 		// 得到mMapView的控制权,可以用它控制和驱动平移和缩放
 		mMapController = mMapView.getController();
 		// 用给定的经纬度构造一个GeoPoint，单位是微度 (度 * 1E6)
-		GeoPoint point = new GeoPoint((int) (39.915 * 1E6),
-				(int) (116.404 * 1E6));
+		SharedPreferences lastCoor = getSharedPreferences("data", 0);
+		String coorStr = lastCoor.getString("lastCoor","39.915,116.404");
+		int zoom = lastCoor.getInt("lastZoom", 12); 
+		String[] coor = coorStr.split(",");
+		GeoPoint point = new GeoPoint(
+				(int) (Double.valueOf(coor[0]) * 1E6),
+				(int) (Double.valueOf(coor[1]) * 1E6));
 		mMapController.setCenter(point);// 设置地图中心点
-		mMapController.setZoom(12);// 设置地图zoom级别
+		mMapController.setZoom(zoom);// 设置地图zoom级别
 		txtCoords.setText(coorFormat(point));
 		// mMapView.setSatellite(true); //卫星图
 
@@ -66,42 +72,22 @@ public class MainActivity extends Activity {
 			}
 
 		});
-
 		btnStart.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				String coordsStr = txtCoords.getText().toString();
-				String[] coor = coordsStr.split(",");
-				Log.i("click", coor[0] + "," + coor[1]);
-				updateLocation(coor);
+				updateLocation(coordsStr);
 			}
 		});
 
 		btnStop.setOnClickListener(new View.OnClickListener() {
-
 			@Override
 			public void onClick(View v) {
 
 			}
 		});
 
-		mBroadcastReceiver = new BroadcastReceiver() {
-
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				String lat = intent.getStringExtra("lat");
-				String lng = intent.getStringExtra("lng");
-				GeoPoint point = new GeoPoint(
-						(int) (Double.valueOf(lat) * 1E6),
-						(int) (Double.valueOf(lng) * 1E6));
-				txtCoords.setText(lat + "," + lng);
-				mMapController.setCenter(point);
-			}
-
-		};
-		IntentFilter intentFilter = new IntentFilter(MainActivity.class
-				.getPackage().getName() + ".NOTIFY");
-		this.registerReceiver(mBroadcastReceiver, intentFilter);
+		
 	}
 
 	private String coorFormat(GeoPoint point) {
@@ -112,21 +98,16 @@ public class MainActivity extends Activity {
 		return lat + "," + lon;
 	}
 
-	private void updateLocation(String[] coor) {
-		String latLng;
+	private void updateLocation(String coordsStr) {
+		String[] coor = coordsStr.split(",");
 		if (coor.length == 2) {
-			latLng = "Latitude:" + coor[0] + "  Longitude:" + coor[1];
 			Bundle bundle = new Bundle();
 			bundle.putString("lat", coor[0]);
 			bundle.putString("lng", coor[1]);
 			Intent service = new Intent(MainActivity.this, GPSService.class);
 			service.putExtra("bundle", bundle);
 			startService(service);
-		} else {
-			latLng = "Can't access your location";
 		}
-		Log.i("updateLocation", "The location has changed..");
-		Log.i("updateLocation", "Your Location:" + latLng);
 
 	}
 
@@ -144,7 +125,6 @@ public class MainActivity extends Activity {
 			mBMapMan.destroy();
 			mBMapMan = null;
 		}
-		unregisterReceiver(mBroadcastReceiver);
 		super.onDestroy();
 	}
 
