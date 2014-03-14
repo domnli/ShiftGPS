@@ -1,6 +1,7 @@
 package com.domnli.shiftgps;
 
 import android.content.Context;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
@@ -9,13 +10,16 @@ import android.widget.Button;
 public class FloatWindow {
 	Context context;
 	WindowManager wm;
-	LayoutParams param;
-	View view;
+	LayoutParams params;
+	Button masterButton;
+	Button[] arrowButtons;
+	boolean isOpen = false;
 	
 	public FloatWindow(Context mcontext){
 		context = mcontext;
 		wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
 		initLayoutParams();
+		initButton();
 	}
 	
 	public void initLayoutParams(){
@@ -24,25 +28,63 @@ public class FloatWindow {
 		param.flags = LayoutParams.FLAG_NOT_TOUCH_MODAL | LayoutParams.FLAG_NOT_FOCUSABLE;
 		param.width = 100;
 		param.height = 100;
-		
+		param.alpha = 0.5f;
 		setParams(param);
 	}
 	
 	public void setParams(LayoutParams param){
-		this.param = param;
+		this.params = param;
 	}
 	
-	public View initButton(){
+	private void initButton(){
 		Button btn = new Button(context);
-		btn.setText("悬浮窗");
-		return btn;
+		btn.setText("展开");
+		this.masterButton = btn;
 	}
 	
-	public void createFloatWindow(){
-		wm.addView(view, param);
+	public void showFloatWindow(){
+		addListener();
+		wm.addView(masterButton, params);
 	}
-	
+	private void addListener(){
+		masterButton.setOnTouchListener(new View.OnTouchListener() {
+			int lastX, lastY;  
+	        int paramX, paramY;
+	        
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				switch(event.getAction()) {  
+	            case MotionEvent.ACTION_DOWN:  
+	                lastX = (int) event.getRawX();  
+	                lastY = (int) event.getRawY();  
+	                paramX = params.x;  
+	                paramY = params.y;  
+	                break;  
+	            case MotionEvent.ACTION_MOVE:  
+	                int dx = (int) event.getRawX() - lastX;  
+	                int dy = (int) event.getRawY() - lastY;  
+	                params.x = paramX + dx;  
+	                params.y = paramY + dy;  
+	                // 更新悬浮窗位置  
+	                wm.updateViewLayout(masterButton, params);  
+	                break;  
+	            }  
+	            return true;  
+			}
+		});
+		masterButton.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				if(isOpen){
+					
+				}else{
+					
+				}
+			}
+		});
+	}
 	public void removeFloatWindow(){
-		wm.removeView(view);
+		wm.removeView(masterButton);
 	}
 }

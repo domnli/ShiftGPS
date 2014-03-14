@@ -1,7 +1,5 @@
 package com.domnli.shiftgps;
 
-import com.baidu.platform.comapi.basestruct.GeoPoint;
-
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -17,10 +15,10 @@ import android.util.Log;
 public class GPSService extends Service implements Runnable {
 
 	private LocationManager locationManager;
-	private String mMockProviderName = "gps";
 	private Location currentLocation;
 	private Thread thd;
 	private BroadcastReceiver mBroadcastReceiver;
+	private FloatWindow floatWindow;
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -34,6 +32,8 @@ public class GPSService extends Service implements Runnable {
 		Log.i("service", thd.getName());
 		locationManager = (LocationManager) this
 				.getSystemService(Context.LOCATION_SERVICE);
+		floatWindow = new FloatWindow(getApplicationContext());
+		floatWindow.showFloatWindow();
 		mBroadcastReceiver = new BroadcastReceiver() {
 
 			@Override
@@ -55,10 +55,12 @@ public class GPSService extends Service implements Runnable {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		Bundle bundle = intent.getBundleExtra("bundle");
-		currentLocation = new Location(mMockProviderName);
+		currentLocation = new Location("gps");
 		currentLocation.setLatitude(Location.convert(bundle.getString("lat")));
 		currentLocation.setLongitude(Location.convert(bundle.getString("lng")));
 		currentLocation.setTime(System.currentTimeMillis());
+		currentLocation.setAccuracy(1);
+		currentLocation.setAltitude(65);
 		if (!thd.isAlive()) {
 			thd.start();
 		}
@@ -77,20 +79,26 @@ public class GPSService extends Service implements Runnable {
 	public void run() {
 		while (true) {
 			try {
-				locationManager.addTestProvider(mMockProviderName, false,
+				locationManager.addTestProvider("gps", false,
 						false, false, false, false, false, false, 1, 1);
-				locationManager.setTestProviderEnabled(mMockProviderName, true);
+				locationManager.setTestProviderEnabled("gps", true);
+				locationManager.addTestProvider("network", false,
+						false, false, false, false, false, false, 1, 1);
+				locationManager.setTestProviderEnabled("network", true);
 			} catch (IllegalArgumentException localIllegalArgumentException) {
 				while (true) {
 					this.locationManager.removeTestProvider("gps");
+					this.locationManager.removeTestProvider("network");
 					this.locationManager.addTestProvider("gps", false, false,
+							false, false, false, false, false, 1, 1);
+					this.locationManager.addTestProvider("network", false, false,
 							false, false, false, false, false, 1, 1);
 				}
 			}
-			currentLocation.setLatitude(currentLocation.getLatitude() + 0.5
+		/*	currentLocation.setLatitude(currentLocation.getLatitude() + 0.5
 					- Math.random());
 			currentLocation.setLongitude(currentLocation.getLongitude() + 0.5
-					- Math.random());
+					- Math.random());*/
 			Log.i("coor",
 					currentLocation.getLatitude() + ","
 							+ currentLocation.getLongitude());
@@ -101,7 +109,9 @@ public class GPSService extends Service implements Runnable {
 			intent.putExtra("lng",
 					Location.convert(currentLocation.getLongitude(), 0));
 			this.sendBroadcast(intent);
-			locationManager.setTestProviderLocation(mMockProviderName,
+			locationManager.setTestProviderLocation("gps",
+					currentLocation);
+			locationManager.setTestProviderLocation("network",
 					currentLocation);
 			try {
 				Thread.sleep(3000);
