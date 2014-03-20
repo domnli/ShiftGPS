@@ -2,18 +2,20 @@ package com.domnli.shiftgps;
 
 import java.util.HashMap;
 
-import android.annotation.SuppressLint;
+import com.baidu.platform.comapi.basestruct.GeoPoint;
+
 import android.content.Context;
-import android.graphics.drawable.Drawable;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 public class FloatWindow {
 	Context context;
@@ -27,17 +29,10 @@ public class FloatWindow {
 		masterButton = new MasterButton();
 		optionPanel = new OptionPanel();
 		masterButton.addMasterButtonListener(optionPanel);
-		initOptionPanel();
-		
-	}
-	
-	private void initOptionPanel() {
-		// TODO Auto-generated method stub
 		
 	}
 	
 	public void showFloatWindow(){
-		//wm.addView(masterButton.getButton(), masterButton.getLayoutParams());
 		masterButton.show();
 	}
 	
@@ -67,6 +62,8 @@ public class FloatWindow {
 			viewParams.flags = LayoutParams.FLAG_NOT_TOUCH_MODAL | LayoutParams.FLAG_NOT_FOCUSABLE;
 			viewParams.width = 64;
 			viewParams.height = 64;
+			viewParams.x = 0;
+			viewParams.y = 0;
 			viewParams.format = android.graphics.PixelFormat.RGBA_8888;//±³¾°Í¸Ã÷
 			
 			btn.setBackgroundColor(android.graphics.Color.TRANSPARENT);
@@ -133,34 +130,30 @@ public class FloatWindow {
 		}
 	}
 	
-	private class OptionPanel{
+	public class OptionPanel implements OnTouchListener{
 		
 		private static final int ARROW_UP = 0;
 		private static final int ARROW_DOWN = 1;
 		private static final int ARROW_LEFT = 2;
 		private static final int ARROW_RIGHT = 3;
-		
+
 		private FrameLayout layout;
 		private LayoutParams wmParams;
 		private HashMap<String,ArrowButton> buttons;
+		private Pressing mPress;
+		
 		public OptionPanel(){
 			layout = new FrameLayout(context);
 			wmParams = new LayoutParams();
-			layout.setBackgroundColor(android.graphics.Color.CYAN);
+			mPress = new Pressing();
+			
+			layout.setBackgroundColor(android.graphics.Color.WHITE);
 			wmParams.type = LayoutParams.TYPE_SYSTEM_ALERT - 1;
 			wmParams.flags = LayoutParams.FLAG_NOT_TOUCH_MODAL | LayoutParams.FLAG_NOT_FOCUSABLE;
-			wmParams.width = 400;
-			wmParams.height = 400;
-			wmParams.alpha = 0.9f;
-			
-			/*ImageButton btn = new ImageButton(context);
-			FrameLayout.LayoutParams btnParams = new FrameLayout.LayoutParams(62, 62);
-			btnParams.setMargins(10, 10, 10, 10);
-			btn.setBackgroundColor(android.graphics.Color.TRANSPARENT);
-			btn.setImageResource(R.drawable.ic_floaticon);
-			
-			layout.addView(btn,btnParams);*/
-			
+			wmParams.width = 300;
+			wmParams.height = 300;
+			wmParams.alpha = 0.8f;
+			buttons = new HashMap<String, ArrowButton>();
 			initButtons();
 		}
 		
@@ -170,31 +163,98 @@ public class FloatWindow {
 			createArrowButton(OptionPanel.ARROW_LEFT);
 			createArrowButton(OptionPanel.ARROW_RIGHT);
 		}
+		
+		private class Pressing extends Thread{
+			private double preStepLat = 0.001;
+			private double preStepLng = 0.001;
+			private double lat;
+			private double lng;
+			
+			public Pressing(){
+				SharedPreferences lastCoor = context.getSharedPreferences("data", 0);
+				String coorStr = lastCoor.getString("lastCoor","39.915,116.404");
+				String[] coor = coorStr.split(",");
+				this.lat = Double.valueOf(coor[0]);
+				this.lng = Double.valueOf(coor[1]);
+			}
+			
+			public void setPreStepLat(double preStepLat) {
+				this.preStepLat = preStepLat;
+			}
+
+			public void setPreStepLng(double preStepLng) {
+				this.preStepLng = preStepLng;
+			}
+
+			public void run() {
+				this.lat = this.lat + this.preStepLat;
+				this.lng = this.lng + this.preStepLng;
+				Bundle bundle = new Bundle();
+				bundle.putString("lat", this.lat+"");
+				bundle.putString("lng", this.lng+"");
+				Intent service = new Intent(context, GPSService.class);
+				service.putExtra("bundle", bundle);
+				context.startService(service);
+		    }
+		}
+		
+		@Override
+		public boolean onTouch(View v, MotionEvent event) {
+			Log.i("tag",v.getTag().toString());
+			switch(event.getAction()){
+				case MotionEvent.ACTION_DOWN:
+					//mPress.
+					break;
+				case MotionEvent.ACTION_UP:
+					
+					break;
+			}
+			return true;
+
+		}
+		
+		public void onLongPress(MotionEvent e) {
+			Log.i("longPress","run");
+        }
+		
 		private void createArrowButton(int key){
+			int panelWidth = wmParams.width;
+			int panelHeight = wmParams.height;
+			int btnWidth = 100;
+			int btnHeight = 100;
+			String keyStr = null;
 			ImageButton btnArrow = new ImageButton(context);
-			FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(80,80);
+			FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(btnWidth,btnHeight);
 			switch(key){
 				case OptionPanel.ARROW_UP:
 					btnArrow.setImageResource(R.drawable.up);
-					params.setMargins(200, 10, 0, 0);
+					//params.setMargins(left, top, right, bottom)
+					params.setMargins(panelWidth/2-btnWidth/2, 10, 0, 0);
+					keyStr = "up";
 					break;
 				case OptionPanel.ARROW_DOWN:
 					btnArrow.setImageResource(R.drawable.down);
-					params.setMargins(200, 300, 0, 10);
+					params.setMargins(panelWidth/2-btnWidth/2, panelHeight-btnHeight-10, 0, 0);
+					keyStr = "down";
 					break;
 				case OptionPanel.ARROW_LEFT:
 					btnArrow.setImageResource(R.drawable.left);
-					params.setMargins(10, 100, 0, 0);
+					params.setMargins(10, panelHeight/2-btnHeight/2, 0, 0);
+					keyStr = "left";
 					break;
 				case OptionPanel.ARROW_RIGHT:
 					btnArrow.setImageResource(R.drawable.right);
-					params.setMargins(300, 100, 0, 0);
+					params.setMargins(panelWidth-btnWidth-10, panelHeight/2-btnHeight/2, 0, 0);
+					keyStr = "right";
 					break;
 			}
+			btnArrow.setTag(keyStr);
+			btnArrow.setOnTouchListener(this);
 			
 			ArrowButton arrowButton = new ArrowButton();
 			arrowButton.setButton(btnArrow);
 			arrowButton.setParams(params);
+			buttons.put(keyStr, arrowButton);
 			layout.addView(btnArrow, params);
 			
 		}
@@ -206,11 +266,7 @@ public class FloatWindow {
 			wm.addView(layout, wmParams);
 		}
 		
-		private void addButton(){
-			
-		}
-		
-		private class ArrowButton{
+		public class ArrowButton{
 			private ImageButton button;
 			private FrameLayout.LayoutParams params;
 			public ImageButton getButton() {

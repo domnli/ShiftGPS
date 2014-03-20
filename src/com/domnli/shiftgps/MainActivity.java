@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 
 import android.location.LocationManager;
@@ -61,10 +62,10 @@ public class MainActivity extends Activity {
 			@Override
 			public void onMapStatusChange(MKMapStatus arg0) {
 				txtCoords.setText(coorFormat(mMapView.getMapCenter()));
-
 			}
 
 		});
+		
 		btnStart.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -78,7 +79,24 @@ public class MainActivity extends Activity {
 
 			}
 		});
+		
+		mBroadcastReceiver = new BroadcastReceiver() {
 
+			@Override
+			public void onReceive(Context context, Intent intent) {
+				String lat = intent.getStringExtra("lat");
+				String lng = intent.getStringExtra("lng");
+				GeoPoint point = new GeoPoint(
+						(int) (Double.valueOf(lat) * 1E6),
+						(int) (Double.valueOf(lng) * 1E6));
+				mMapController.setCenter(point);// 设置地图中心点
+				txtCoords.setText(coorFormat(point));
+			}
+
+		};
+		IntentFilter intentFilter = new IntentFilter(MainActivity.class
+				.getPackage().getName() + ".NOTIFY");
+		this.registerReceiver(mBroadcastReceiver, intentFilter);
 		
 	}
 
