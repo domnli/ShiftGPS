@@ -32,6 +32,15 @@ public class FloatWindow {
 		
 	}
 	
+	public FloatWindow(Context mcontext,OnTouchListener onTouchListener){
+		context = mcontext;
+		wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+		masterButton = new MasterButton();
+		optionPanel = new OptionPanel(onTouchListener);
+		masterButton.addMasterButtonListener(optionPanel);
+		
+	}
+	
 	public void showFloatWindow(){
 		masterButton.show();
 	}
@@ -130,7 +139,7 @@ public class FloatWindow {
 		}
 	}
 	
-	public class OptionPanel implements OnTouchListener{
+	public class OptionPanel{
 		
 		private static final int ARROW_UP = 0;
 		private static final int ARROW_DOWN = 1;
@@ -140,21 +149,41 @@ public class FloatWindow {
 		private FrameLayout layout;
 		private LayoutParams wmParams;
 		private HashMap<String,ArrowButton> buttons;
-		private Pressing mPress;
+		private OnTouchListener arrowTouchListener;
 		
 		public OptionPanel(){
+			init();
+		}
+		
+		public OptionPanel(OnTouchListener l){
+			arrowTouchListener = l;
+			init();
+		}
+
+		public void init(){
 			layout = new FrameLayout(context);
 			wmParams = new LayoutParams();
-			mPress = new Pressing();
-			
 			layout.setBackgroundColor(android.graphics.Color.WHITE);
 			wmParams.type = LayoutParams.TYPE_SYSTEM_ALERT - 1;
 			wmParams.flags = LayoutParams.FLAG_NOT_TOUCH_MODAL | LayoutParams.FLAG_NOT_FOCUSABLE;
 			wmParams.width = 300;
 			wmParams.height = 300;
 			wmParams.alpha = 0.8f;
+			
 			buttons = new HashMap<String, ArrowButton>();
 			initButtons();
+			
+			if(arrowTouchListener == null){
+				arrowTouchListener = new OnTouchListener(){
+
+					@Override
+					public boolean onTouch(View v, MotionEvent event) {
+						// TODO Auto-generated method stub
+						return false;
+					}
+					
+				};
+			}
 		}
 		
 		private void initButtons(){
@@ -164,58 +193,20 @@ public class FloatWindow {
 			createArrowButton(OptionPanel.ARROW_RIGHT);
 		}
 		
-		private class Pressing extends Thread{
-			private double preStepLat = 0.001;
-			private double preStepLng = 0.001;
-			private double lat;
-			private double lng;
-			
-			public Pressing(){
-				SharedPreferences lastCoor = context.getSharedPreferences("data", 0);
-				String coorStr = lastCoor.getString("lastCoor","39.915,116.404");
-				String[] coor = coorStr.split(",");
-				this.lat = Double.valueOf(coor[0]);
-				this.lng = Double.valueOf(coor[1]);
-			}
-			
-			public void setPreStepLat(double preStepLat) {
-				this.preStepLat = preStepLat;
-			}
-
-			public void setPreStepLng(double preStepLng) {
-				this.preStepLng = preStepLng;
-			}
-
-			public void run() {
-				this.lat = this.lat + this.preStepLat;
-				this.lng = this.lng + this.preStepLng;
-				Bundle bundle = new Bundle();
-				bundle.putString("lat", this.lat+"");
-				bundle.putString("lng", this.lng+"");
-				Intent service = new Intent(context, GPSService.class);
-				service.putExtra("bundle", bundle);
-				context.startService(service);
-		    }
-		}
-		
-		@Override
+/*		@Override
 		public boolean onTouch(View v, MotionEvent event) {
-			Log.i("tag",v.getTag().toString());
 			switch(event.getAction()){
 				case MotionEvent.ACTION_DOWN:
-					//mPress.
+					Log.i("touch","down");
+					mPress.pressDown();
 					break;
 				case MotionEvent.ACTION_UP:
-					
+					Log.i("touch","up");
+					mPress.pressUp();
 					break;
 			}
 			return true;
-
-		}
-		
-		public void onLongPress(MotionEvent e) {
-			Log.i("longPress","run");
-        }
+		}*/
 		
 		private void createArrowButton(int key){
 			int panelWidth = wmParams.width;
@@ -249,7 +240,7 @@ public class FloatWindow {
 					break;
 			}
 			btnArrow.setTag(keyStr);
-			btnArrow.setOnTouchListener(this);
+			btnArrow.setOnTouchListener(this.arrowTouchListener);
 			
 			ArrowButton arrowButton = new ArrowButton();
 			arrowButton.setButton(btnArrow);

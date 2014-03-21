@@ -10,7 +10,8 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
 
 public class GPSService extends Service implements Runnable {
 
@@ -27,22 +28,36 @@ public class GPSService extends Service implements Runnable {
 
 	@Override
 	public void onCreate() {
-		Log.i("service", "onCreate");
 		thd = new Thread(this);
-		Log.i("service", thd.getName());
 		locationManager = (LocationManager) this
 				.getSystemService(Context.LOCATION_SERVICE);
-		floatWindow = new FloatWindow(getApplicationContext());
+		currentLocation = new Location("gps");
+		floatWindow = new FloatWindow(getApplicationContext(), new View.OnTouchListener() {
+			
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				String tag = v.getTag().toString();
+				if(tag == "up"){
+					currentLocation.setLatitude(currentLocation.getLatitude() + 0.001);
+				}
+				if(tag == "down"){
+					currentLocation.setLatitude(currentLocation.getLatitude() - 0.001);
+				}
+				if(tag == "left"){
+					currentLocation.setLongitude(currentLocation.getLongitude() - 0.001);
+				}
+				if(tag == "right"){
+					currentLocation.setLongitude(currentLocation.getLongitude() + 0.001);
+				}
+				return false;
+			}
+		});
 		floatWindow.showFloatWindow();
 		mBroadcastReceiver = new BroadcastReceiver() {
 
 			@Override
 			public void onReceive(Context context, Intent intent) {
-				String lat = intent.getStringExtra("lat");
-				String lng = intent.getStringExtra("lng");
-				SharedPreferences.Editor lastCoorEdit =  getSharedPreferences("data", 0).edit();
-				lastCoorEdit.putString("lastCoor", lat+","+lng);
-				lastCoorEdit.commit();
+				
 			}
 
 		};
@@ -55,7 +70,6 @@ public class GPSService extends Service implements Runnable {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		Bundle bundle = intent.getBundleExtra("bundle");
-		currentLocation = new Location("gps");
 		currentLocation.setLatitude(Location.convert(bundle.getString("lat")));
 		currentLocation.setLongitude(Location.convert(bundle.getString("lng")));
 		currentLocation.setTime(System.currentTimeMillis());
@@ -64,14 +78,16 @@ public class GPSService extends Service implements Runnable {
 		if (!thd.isAlive()) {
 			thd.start();
 		}
-		Log.i("serviceonstart",
-				bundle.getString("lat") + "," + bundle.getString("lng"));
 	}
 
 	public void onDestory() {
-		Log.i("service", "onDestory");
 		thd.interrupt();
 		unregisterReceiver(mBroadcastReceiver);
+		String lat = currentLocation.getLatitude() + "";
+		String lng = currentLocation.getLongitude() + "";
+		SharedPreferences.Editor lastCoorEdit =  getSharedPreferences("data", 0).edit();
+		lastCoorEdit.putString("lastCoor", lat+","+lng);
+		lastCoorEdit.commit();
 		super.onDestroy();
 	}
 
@@ -99,9 +115,6 @@ public class GPSService extends Service implements Runnable {
 					- Math.random());
 			currentLocation.setLongitude(currentLocation.getLongitude() + 0.5
 					- Math.random());*/
-			Log.i("coor",
-					currentLocation.getLatitude() + ","
-							+ currentLocation.getLongitude());
 			Intent intent = new Intent(MainActivity.class.getPackage()
 					.getName() + ".NOTIFY");
 			intent.putExtra("lat",
@@ -114,7 +127,7 @@ public class GPSService extends Service implements Runnable {
 			locationManager.setTestProviderLocation("network",
 					currentLocation);
 			try {
-				Thread.sleep(3000);
+				Thread.sleep(300);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}

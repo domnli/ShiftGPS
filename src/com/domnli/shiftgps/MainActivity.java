@@ -12,8 +12,8 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
-import android.util.Log;
 import android.view.Menu;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -76,7 +76,7 @@ public class MainActivity extends Activity {
 		btnStop.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-
+				
 			}
 		});
 		
@@ -190,12 +190,11 @@ public class MainActivity extends Activity {
 			e.printStackTrace();
 		 }
 		 if(status == 0) {
-			 Toast.makeText(getApplicationContext(), "请打开允许模拟位置选项", Toast.LENGTH_LONG).show();
+			 Toast.makeText(getApplicationContext(), "请打开允许模拟位置选项,然后点返回键", Toast.LENGTH_LONG).show();
 			 startActivity(new Intent().setClassName("com.android.settings", "com.android.settings.DevelopmentSettings"));
 		 }else if(status == 1){
 			 mockOpen = true;
 		 }
-		 Log.i("canMock",status+"");
 	}
 
 }
