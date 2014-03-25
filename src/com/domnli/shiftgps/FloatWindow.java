@@ -61,6 +61,7 @@ public class FloatWindow {
 		private boolean isOpen = false;
 		
 		public MasterButton(){
+ 
 			view = new FrameLayout(context);
 			btn = new ImageButton(context);
 			viewParams = new LayoutParams();
